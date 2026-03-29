@@ -9,6 +9,7 @@ export default function Sidebar({ userRole }) {
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/profile', label: 'Profile', icon: '👤' },
+    { path: '/activity', label: 'Activity Log', icon: '📋' },
     ...(userRole === 'admin' ? [
       { path: '/admin', label: 'Admin Panel', icon: '⚙️' },
     ] : []),

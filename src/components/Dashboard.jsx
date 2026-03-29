@@ -5,6 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import RoleBadge from './RoleBadge';
 
 export default function Dashboard() {
   const { user, userRole, logout } = useAuth();
@@ -60,7 +61,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
                 <h3 className="text-gray-500 text-sm font-semibold mb-2">Total Revenue</h3>
-                <p className="text-3xl font-bold text-gray-800">$45,280</p>
+                <p className="text-3xl font-bold text-gray-800">INR 45,280</p>
               </div>
               <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
                 <h3 className="text-gray-500 text-sm font-semibold mb-2">Active Users</h3>
@@ -76,22 +77,33 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* User Info */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Your Profile</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-gray-500 text-sm">Email</p>
-                  <p className="text-gray-800 font-semibold">{userData?.email}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Full Name</p>
-                  <p className="text-gray-800 font-semibold">
-                    {userData?.firstName} {userData?.lastName}
-                  </p>
-                </div>
+           {/* User Info with Role Badge */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Your Profile</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-500 text-sm">Email</p>
+                <p className="text-gray-800 font-semibold">{userData?.email}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Full Name</p>
+                <p className="text-gray-800 font-semibold">
+                  {userData?.firstName} {userData?.lastName}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Role</p>
+                <RoleBadge role={userRole} size="medium" />
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Member Since</p>
+                <p className="text-gray-800 font-semibold">
+                  {new Date(userData?.createdAt).toLocaleDateString()}
+                </p>
               </div>
             </div>
+          </div>
+            
           </div>
         </main>
       </div>

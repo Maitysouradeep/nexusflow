@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import UserProfile from './components/UserProfile';
 import AdminPanel from './components/AdminPanel';
 import Sidebar from './components/Sidebar';
+import ActivityLog from './components/ActivityLog';
 
 function App() {
   return (
@@ -52,6 +53,15 @@ function App() {
                 </div>
               </ProtectedRoute>
             }
+          />
+
+          <Route
+          path="/activity"
+          element={
+            <ProtectedRoute>
+              <ActivityLog/>
+            </ProtectedRoute>
+          }
           />
 
           <Route path="/" element={<Navigate to="/dashboard" />} />

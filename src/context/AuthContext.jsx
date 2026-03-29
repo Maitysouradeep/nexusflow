@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { logActivity } from '../utils/activityLogger';
 
 const AuthContext = createContext();
 
@@ -40,6 +41,13 @@ export const AuthProvider = ({ children }) => {
         updatedAt: new Date().toISOString(),
       });
 
+      // Log activity
+      await logActivity(newUser.uid, 'user_created', {
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+      });
+
       return newUser;
     } catch (error) {
       throw error;
@@ -50,6 +58,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Log activity - MOVED INSIDE THE FUNCTION
+      await logActivity(userCredential.user.uid, 'login', {
+        email: email,
+        loginTime: new Date().toISOString(),
+      });
+
       return userCredential.user;
     } catch (error) {
       throw error;
@@ -59,6 +74,14 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = async () => {
     try {
+      // Log activity before logout
+      if (user) {
+        await logActivity(user.uid, 'logout', {
+          email: user.email,
+          logoutTime: new Date().toISOString(),
+        });
+      }
+
       await signOut(auth);
       setUser(null);
       setUserRole(null);
