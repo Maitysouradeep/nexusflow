@@ -58,23 +58,15 @@ export default function Dashboard() {
             </h1>
 
             {/* Dashboard Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-                <h3 className="text-gray-500 text-sm font-semibold mb-2">Total Revenue</h3>
-                <p className="text-3xl font-bold text-gray-800">INR 45,280</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border-t-4 border-blue-500 hover:shadow-xl transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm font-semibold">Total Revenue</p>
+                  <p className="text-3xl font-bold text-gray-800 dark:text-gray-200 mt-2">$45,280</p>
+                </div>
+                <div className="text-4xl">💰</div>
               </div>
-              <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-                <h3 className="text-gray-500 text-sm font-semibold mb-2">Active Users</h3>
-                <p className="text-3xl font-bold text-gray-800">1,234</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-                <h3 className="text-gray-500 text-sm font-semibold mb-2">Growth Rate</h3>
-                <p className="text-3xl font-bold text-green-600">+23%</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-                <h3 className="text-gray-500 text-sm font-semibold mb-2">Your Role</h3>
-                <p className="text-3xl font-bold text-blue-600 capitalize">{userRole}</p>
-              </div>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-4">+12% from last month</p>
             </div>
 
            {/* User Info with Role Badge */}

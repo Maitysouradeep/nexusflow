@@ -1,73 +1,102 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { DarkModeProvider } from './context/DarkModeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import UserProfile from './components/UserProfile';
 import AdminPanel from './components/AdminPanel';
-import Sidebar from './components/Sidebar';
+import AnalyticsDemo from './components/AnalyticsDemo';
+import Analytics from './components/Analytics';
 import ActivityLog from './components/ActivityLog';
+import Subscription from './components/Subscription';
+import Settings from './components/Settings';
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    <DarkModeProvider>
+      <Router>
+        <AuthProvider>
+          <Routes>
+            {/* Public Demo Routes */}
+            <Route path="/demo/admin" element={<AdminPanel isDemoMode={true} />} />
+            <Route path="/demo/analytics" element={<AnalyticsDemo />} />
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <div className="flex h-screen">
-                  <Sidebar userRole="user" />
-                  <div className="flex-1 overflow-auto">
-                    <UserProfile />
-                  </div>
-                </div>
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <div className="flex h-screen">
-                  <Sidebar userRole="admin" />
-                  <div className="flex-1 overflow-auto">
-                    <AdminPanel />
-                  </div>
-                </div>
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-          path="/activity"
-          element={
-            <ProtectedRoute>
-              <ActivityLog/>
-            </ProtectedRoute>
-          }
-          />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminPanel isDemoMode={false} />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-        </Routes>
-      </AuthProvider>
-    </Router>
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/activity"
+              element={
+                <ProtectedRoute>
+                  <ActivityLog />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/subscription"
+              element={
+                <ProtectedRoute>
+                  <Subscription />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+          </Routes>
+        </AuthProvider>
+      </Router>
+    </DarkModeProvider>
   );
 }
 

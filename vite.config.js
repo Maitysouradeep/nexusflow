@@ -10,4 +10,5 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  darkMode:'class', //Enable dark mode with class stratergy
 })

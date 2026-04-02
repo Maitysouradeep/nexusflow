@@ -1,18 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getUserActivityLogs, getAllActivityLogs } from '../utils/activityLogger';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '../firebase';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
 export default function ActivityLog() {
   const { user, userRole, logout } = useAuth();
   const [activities, setActivities] = useState([]);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('all');
 
   useEffect(() => {
+    fetchUserData();
     fetchActivities();
   }, [userRole]);
+
+  const fetchUserData = async () =>{
+    if(!user) return;
+    try{
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()){
+        setUserData(userDoc.data());
+      }
+    }catch(error){
+      console.error('Error fetching user data:', error)};
+  };
 
   const fetchActivities = async () => {
     try {
@@ -66,17 +81,23 @@ export default function ActivityLog() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className='flex h-screen bg-gray-100'>
+        <Sidebar userRole={userRole}/>
+        <div className='flex-1 flex flex-col'>
+          <Header user={userData} userRole={userRole} onLogout={handleLogout}/>
+          <div className='flex items-center justify-center flex-1'>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-50'></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-100">
       <Sidebar userRole={userRole} />
       <div className="flex-1 flex flex-col">
-        <Header user={{ firstName: user?.displayName || 'User' }} userRole={userRole} onLogout={handleLogout} />
+        <Header user={userData} userRole={userRole} onLogout={handleLogout} />
         
         <main className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto">
