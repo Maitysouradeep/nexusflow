@@ -13,6 +13,7 @@ import Analytics from './components/Analytics';
 import ActivityLog from './components/ActivityLog';
 import Subscription from './components/Subscription';
 import Settings from './components/Settings';
+import DemoLanding from './components/DemoLanding';
 
 function App() {
   return (
@@ -92,7 +93,8 @@ function App() {
               }
             />
 
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+            
+            <Route path="/" element={<DemoLanding />} />
           </Routes>
         </AuthProvider>
       </Router>
