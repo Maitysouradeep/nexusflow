@@ -1,22 +1,24 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-
-  apiKey: "AIzaSyBs6z1zh4HIBzhkVx8ALkZEFw8Humv8jwQ",
-  authDomain: "saas-dashboard-e4542.firebaseapp.com",
-  projectId: "saas-dashboard-e4542",
-  storageBucket: "saas-dashboard-e4542.firebasestorage.app",
-  messagingSenderId: "935421206907",
-  appId: "1:935421206907:web:0b00af85dd3f0f5e0c5dde",
-  measurementId: "G-TMPK8RMMS0"
-
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+console.log("Firebase Project:", firebaseConfig.projectId);
+
 const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 export default app;
 

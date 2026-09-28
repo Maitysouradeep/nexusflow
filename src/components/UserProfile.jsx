@@ -1,147 +1,462 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
-import Header from './Header';
+import React, { useEffect, useState } from "react";
+import {
+  User,
+  Mail,
+  Shield,
+  Pencil,
+  Save,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  CalendarDays,
+} from "lucide-react";
+
+import { useAuth } from "../context/AuthContext";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import Header from "./Header";
+import Sidebar from "./Sidebar";
 
 export default function UserProfile() {
   const { user, userRole, logout } = useAuth();
+
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [message, setMessage] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+  });
+
+  const [message, setMessage] = useState({
+    type: "",
+    text: "",
+  });
 
   useEffect(() => {
     fetchProfile();
   }, [user]);
 
   const fetchProfile = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+
       if (userDoc.exists()) {
-        setProfileData(userDoc.data());
-        setFormData(userDoc.data());
+        const data = userDoc.data();
+
+        setProfileData(data);
+
+        setFormData({
+          firstName: data.firstName || "",
+          lastName: data.lastName || "",
+        });
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error("Error fetching profile:", error);
+
+      setMessage({
+        type: "error",
+        text: "Unable to load your profile.",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const handleEdit = () => {
+    setMessage({
+      type: "",
+      text: "",
+    });
+
+    setFormData({
+      firstName: profileData?.firstName || "",
+      lastName: profileData?.lastName || "",
+    });
+
+    setEditing(true);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      firstName: profileData?.firstName || "",
+      lastName: profileData?.lastName || "",
+    });
+
+    setEditing(false);
+
+    setMessage({
+      type: "",
+      text: "",
+    });
   };
 
   const handleSave = async () => {
-    try {
-      await updateDoc(doc(db, 'users', user.uid), {
-        ...formData,
-        updatedAt: new Date().toISOString(),
+    if (!user) return;
+
+    const firstName = formData.firstName.trim();
+    const lastName = formData.lastName.trim();
+
+    if (!firstName || !lastName) {
+      setMessage({
+        type: "error",
+        text: "First name and last name are required.",
       });
-      setProfileData(formData);
+
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await updateDoc(doc(db, "users", user.uid), {
+        firstName,
+        lastName,
+        updatedAt: serverTimestamp(),
+      });
+
+      const updatedProfile = {
+        ...profileData,
+        firstName,
+        lastName,
+      };
+
+      setProfileData(updatedProfile);
+
+      setFormData({
+        firstName,
+        lastName,
+      });
+
       setEditing(false);
-      setMessage('Profile updated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+
+      setMessage({
+        type: "success",
+        text: "Profile updated successfully.",
+      });
+
+      setTimeout(() => {
+        setMessage({
+          type: "",
+          text: "",
+        });
+      }, 3000);
     } catch (error) {
-      setMessage('Error updating profile: ' + error.message);
+      console.error("Error updating profile:", error);
+
+      setMessage({
+        type: "error",
+        text: "Unable to update your profile. Please try again.",
+      });
+    } finally {
+      setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   const handleLogout = async () => {
     await logout();
   };
 
+  const getInitials = () => {
+    const first = profileData?.firstName?.charAt(0) || "";
+    const last = profileData?.lastName?.charAt(0) || "";
+
+    return `${first}${last}`.toUpperCase() || "U";
+  };
+
+  const getFullName = () => {
+    const first = profileData?.firstName || "";
+    const last = profileData?.lastName || "";
+
+    return `${first} ${last}`.trim() || "User";
+  };
+
+  const formatRole = (role) => {
+    if (!role) return "Member";
+
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-1 items-center justify-center bg-[#070B14]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-sm text-gray-500">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 flex flex-col">
-      <Header user={profileData} userRole={userRole} onLogout={handleLogout} />
-      <div className="flex-1 p-6">
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">My Profile</h1>
+    <div className="flex h-screen bg-[#070B14] text-white">
+      <Sidebar userRole={userRole} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Header
+          user={profileData}
+          userRole={userRole}
+          onLogout={handleLogout}
+        />
 
-          {message && (
-            <div className={`mb-4 px-4 py-3 rounded ${message.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-              {message}
-            </div>
-          )}
+        <main className="flex-1 overflow-y-auto nexus-scroll">
+          <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-8">
+            {/* Page heading */}
+            <div className="mb-8">
+              <div className="mb-2 flex items-center gap-2 text-sm text-gray-500">
+                <span>Account</span>
+                <span>/</span>
+                <span className="text-gray-300">Profile</span>
+              </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName || ''}
-                onChange={handleInputChange}
-                disabled={!editing}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              />
-            </div>
+              <h1 className="text-3xl font-bold tracking-tight text-white">
+                My Profile
+              </h1>
 
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName || ''}
-                onChange={handleInputChange}
-                disabled={!editing}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              />
+              <p className="mt-2 text-sm text-gray-400">
+                Manage your personal information and account details.
+              </p>
             </div>
 
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Email</label>
-              <input
-                type="email"
-                value={profileData?.email || ''}
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
-              />
-            </div>
+            {/* Profile header */}
+            <section className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#0D1422] shadow-2xl">
+              <div className="relative h-32 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-transparent">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.18),transparent_40%)]" />
+              </div>
 
-            <div className="space-y-4 pt-4">
-              {editing ? (
-                <>
+              <div className="relative px-6 pb-6 sm:px-8">
+                <div className="-mt-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                    {/* Avatar */}
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-4 border-[#0D1422] bg-gradient-to-br from-blue-500 to-purple-600 text-3xl font-bold text-white shadow-xl">
+                      {getInitials()}
+                    </div>
+
+                    <div className="pb-1">
+                      <h2 className="text-2xl font-bold text-white">
+                        {getFullName()}
+                      </h2>
+
+                      <p className="mt-1 text-sm text-gray-400">
+                        {profileData?.email || user?.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Role */}
+                  <div className="flex items-center gap-2 self-start rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 sm:self-end">
+                    <Shield className="h-4 w-4 text-purple-400" />
+
+                    <span className="text-sm font-medium text-gray-300">
+                      {formatRole(userRole)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Message */}
+            {message.text && (
+              <div
+                className={`mb-6 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
+                  message.type === "success"
+                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                    : "border-red-500/20 bg-red-500/10 text-red-300"
+                }`}
+              >
+                {message.type === "success" ? (
+                  <CheckCircle2 className="h-5 w-5 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                )}
+
+                <span>{message.text}</span>
+              </div>
+            )}
+
+            {/* Profile information */}
+            <section className="rounded-2xl border border-white/10 bg-[#0D1422] shadow-xl">
+              <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Personal information
+                  </h3>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    Update the information associated with your account.
+                  </p>
+                </div>
+
+                {!editing && (
                   <button
-                    onClick={handleSave}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg transition"
+                    type="button"
+                    onClick={handleEdit}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-white/[0.08] hover:text-white"
                   >
-                    Save Changes
+                    <Pencil className="h-4 w-4" />
+                    Edit profile
                   </button>
+                )}
+              </div>
+
+              <div className="grid gap-6 px-6 py-6 sm:grid-cols-2 sm:px-8">
+                {/* First name */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">
+                    First name
+                  </label>
+
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName || ""}
+                      onChange={handleInputChange}
+                      disabled={!editing || saving}
+                      className="w-full rounded-xl border border-white/10 bg-[#080D17] py-3 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="First name"
+                    />
+                  </div>
+                </div>
+
+                {/* Last name */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-300">
+                    Last name
+                  </label>
+
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName || ""}
+                      onChange={handleInputChange}
+                      disabled={!editing || saving}
+                      className="w-full rounded-xl border border-white/10 bg-[#080D17] py-3 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      placeholder="Last name"
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="sm:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-300">
+                    Email address
+                  </label>
+
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+
+                    <input
+                      type="email"
+                      value={profileData?.email || user?.email || ""}
+                      disabled
+                      className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-white/[0.03] py-3 pl-10 pr-4 text-sm text-gray-400 outline-none"
+                    />
+                  </div>
+
+                  <p className="mt-2 text-xs text-gray-600">
+                    Your email address is managed through your authentication
+                    account.
+                  </p>
+                </div>
+              </div>
+
+              {/* Account information */}
+              <div className="border-t border-white/10 px-6 py-6 sm:px-8">
+                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
+                  Account information
+                </h3>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Role */}
+                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-purple-400" />
+
+                      <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Role
+                      </span>
+                    </div>
+
+                    <p className="text-sm font-medium text-gray-200">
+                      {formatRole(userRole)}
+                    </p>
+                  </div>
+
+                  {/* Account status */}
+                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-blue-400" />
+
+                      <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Account status
+                      </span>
+                    </div>
+
+                    <p className="text-sm font-medium text-emerald-400">
+                      Active
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              {editing && (
+                <div className="flex flex-col-reverse gap-3 border-t border-white/10 bg-white/[0.02] px-6 py-5 sm:flex-row sm:justify-end sm:px-8">
                   <button
-                    onClick={() => {
-                      setEditing(false);
-                      setFormData(profileData);
-                    }}
-                    className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 rounded-lg transition"
+                    type="button"
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-medium text-gray-300 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
+                    <X className="h-4 w-4" />
                     Cancel
                   </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition"
-                >
-                  Edit Profile
-                </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/10 transition hover:from-blue-600 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save changes
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
-            </div>
+            </section>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
